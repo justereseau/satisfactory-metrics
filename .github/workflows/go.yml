@@ -6,6 +6,11 @@ name: Go
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - README.md
+      - LICENSE
+      - .github/workflows/container.yml
+      - Dockerfile
   pull_request:
     branches: ["main"]
 
