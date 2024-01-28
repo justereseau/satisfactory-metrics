@@ -1,8 +1,8 @@
 name: Deploy Images to GHCR
 
 env:
-  IMAGE_NAME: ghcr.io/lucasmaurice/satisfactory-metrics
-
+  IMAGE_NAME: ghcr.io/justereseau/satisfactory-metrics
+  
 on:
   push:
     branches: ["main"]
