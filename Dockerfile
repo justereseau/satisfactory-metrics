@@ -14,7 +14,7 @@ RUN go build -o satisfactory-metrics -ldflags "-s -w" main.go
 
 FROM scratch
 LABEL maintainer="Sonic <sonic@djls.io>"
-LABEL org.opencontainers.image.source=https://github.com/lucasmaurice/satisfactory-metrics
+LABEL org.opencontainers.image.source=https://github.com/justereseau/satisfactory-metrics
 LABEL org.opencontainers.image.description="Prometheus exporter for Satisfactory InGame data."
 LABEL org.opencontainers.image.licenses=WTFPL
 
