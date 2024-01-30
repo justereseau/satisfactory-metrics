@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-kit/log/level"
-	"github.com/lucasmaurice/satisfactory-metrics/exporter"
+	"github.com/justereseau/satisfactory-metrics/satisfactory-exporter/exporter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"

@@ -1,4 +1,4 @@
-module github.com/lucasmaurice/satisfactory-metrics
+module github.com/justereseau/satisfactory-metrics/satisfactory-exporter
 
 go 1.21.6
 
