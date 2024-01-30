@@ -6,10 +6,9 @@ env:
 on:
   push:
     branches: ["main"]
-    paths-ignore:
-      - README.md
-      - LICENSE
-      - .github/workflows/go.yml
+    paths:
+      - satisfactory-metadata/**
+      - .github/workflows/build-metadata-images.yml
   pull_request:
     branches: ["main"]
 

@@ -1,15 +1,14 @@
 name: Exporter Image Build and Push
 
 env:
-  IMAGE_NAME: ghcr.io/justereseau/satisfactory-metrics
+  IMAGE_NAME: ghcr.io/justereseau/satisfactory-exporter
   
 on:
   push:
     branches: ["main"]
-    paths-ignore:
-      - README.md
-      - LICENSE
-      - .github/workflows/go.yml
+    paths:
+      - satisfactory-exporter/**
+      - .github/workflows/build-exporter-images.yml
   pull_request:
     branches: ["main"]
 
