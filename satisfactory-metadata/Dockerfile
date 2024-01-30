@@ -7,7 +7,6 @@ WORKDIR /go/src
 COPY go.mod ./go.mod
 COPY go.sum ./go.sum
 COPY main.go ./main.go
-COPY cache_worker.go ./cache_worker.go
 
 RUN go mod download
 RUN go build -o satisfactory-metadata -ldflags "-s -w" main.go
