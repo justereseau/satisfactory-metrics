@@ -165,7 +165,7 @@ func cacheMetrics(db *sql.DB, metric string, data []string) (err error) {
 		return
 	}
 	for _, s := range data {
-		insert := `insert into cache (metric,data) values($1,$2)`
+		insert := `insert into cache (metric, frm_data) values($1, $2)`
 		_, err = tx.Exec(insert, metric, s)
 		if err != nil {
 			return
@@ -189,7 +189,7 @@ func cacheMetricsWithHistory(db *sql.DB, metric string, data []string) (err erro
 		}
 	}()
 	for _, s := range data {
-		insert := `insert into cache_with_history (metric,data, time) values($1,$2,$3)`
+		insert := `insert into cache_with_history (metric, frm_data, time) values($1,$2,$3)`
 		_, err = tx.Exec(insert, metric, s, now)
 		if err != nil {
 			return
