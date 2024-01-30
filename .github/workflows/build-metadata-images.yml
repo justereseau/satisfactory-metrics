@@ -1,7 +1,7 @@
-name: Deploy Images to GHCR
+name: Metadata Image Build and Push
 
 env:
-  IMAGE_NAME: ghcr.io/justereseau/satisfactory-metrics
+  IMAGE_NAME: ghcr.io/justereseau/satisfactory-metadata
   
 on:
   push:
