@@ -23,7 +23,7 @@ const (
 var (
 	listenAddress = flag.String("web.listen-address", "127.0.0.1:9100", "Address to listen on for web interface and telemetry.")
 	logLevel      = flag.String("log.level", "info", "Only log messages with the given severity or above. One of: [debug, info, warn, error, none]")
-	frmApiAddress = flag.String("frm.listen-address", "http://localhost:8080", "Path to the sensor file")
+	frmApiAddress = flag.String("frm.listen-address", "http://localhost:8080", "Address of Ficsit Remote Monitoring webserver")
 )
 
 func main() {
