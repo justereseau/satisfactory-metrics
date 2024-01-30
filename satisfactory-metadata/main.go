@@ -21,7 +21,16 @@ var (
 )
 
 func main() {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", pgHost, pgPort, pgUser, pgPassword, pgDb)
+	// Get parameters
+	flag.Parse()
+
+	// Generate connection string
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", *pgHost, *pgPort, *pgUser, *pgPassword, *pgDb)
+
+	// Print connection string for debugging purposes
+	fmt.Println(psqlconn)
+
+	// Connect to database
 	db, err := sql.Open("postgres", psqlconn)
 
 	if err != nil {
