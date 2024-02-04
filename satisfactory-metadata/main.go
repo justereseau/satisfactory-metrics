@@ -63,6 +63,7 @@ func main() {
 	pullMetrics(db, "storageInv", "/getStorageInv", false)
 	pullMetrics(db, "worldInv", "/getWorldInv", false)
 	pullMetrics(db, "droneStation", "/getDroneStation", false)
+	pullMetrics(db, "generators", "/getGenerators", false)
 
 	// Realtime metrics
 	pullMetrics(db, "drone", "/getDrone", true)
@@ -70,28 +71,33 @@ func main() {
 	pullMetrics(db, "truck", "/getVehicles", true)
 	pullMetrics(db, "trainStation", "/getTrainStation", true)
 	pullMetrics(db, "truckStation", "/getTruckStation", true)
+
 }
 
-// flush the metric history cache
+// initialize the database
 func initDB(db *sql.DB) error {
-	req := `CREATE TABLE IF NOT EXISTS cache(
+	_, err := db.Exec(`
+	  CREATE TABLE IF NOT EXISTS cache(
 		id serial primary key,
 		metric text NOT NULL,
 		frm_data jsonb
 	  );
-	  CREATE INDEX cache_metric ON cache(metric);
-	  
+
 	  CREATE TABLE IF NOT EXISTS cache_with_history(
 		id serial primary key,
 		metric text NOT NULL,
 		frm_data jsonb,
 		time timestamp
-	  );`
+	  );
 
-	_, err := db.Exec(req)
+	  CREATE INDEX IF NOT EXISTS cache_metric_idx ON cache(metric);
+	  CREATE INDEX IF NOT EXISTS cache_with_history_metric_idx ON cache_with_history(metric);
+	  `)
 	if err != nil {
-		fmt.Println("flush metrics history db error: ", err)
+		fmt.Println("Error while creating DB Tables : ", err)
+		return err
 	}
+	fmt.Println("DB Tables created successfully")
 	return err
 }
 
@@ -110,7 +116,7 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 	resp, err := http.Get(*frmApiAddress + route)
 
 	if err != nil {
-		fmt.Println("error when parsing json: %s", err)
+		fmt.Println("Error while querying Ficsit Remote Monitoring API: ", err)
 		return
 	}
 
@@ -118,7 +124,11 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(&content)
 	if err != nil {
-		fmt.Println("error when parsing json: %s", err)
+		// Try to found if it is an empty object
+		if _, ok := err.(*json.UnmarshalTypeError); ok {
+			return
+		}
+		fmt.Println("Error while decoding Ficsit Remote Monitoring API response: ", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -142,6 +152,7 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 			return
 		}
 	}
+	fmt.Println("Successfully cached metrics for " + metric)
 }
 
 // cache metrics in the database
