@@ -63,7 +63,11 @@ func main() {
 	pullMetrics(db, "storageInv", "/getStorageInv", false)
 	pullMetrics(db, "worldInv", "/getWorldInv", false)
 	pullMetrics(db, "droneStation", "/getDroneStation", false)
-	pullMetrics(db, "generators", "/getGenerators", false)
+	pullMetrics(db, "generators", "/getCoalGenerator", false)
+	pullMetrics(db, "generators", "/getBiomassGenerator", false)
+	pullMetrics(db, "generators", "/getFuelGenerator", false)
+	pullMetrics(db, "generators", "/getNuclearGenerator", false)
+	pullMetrics(db, "generators", "/getGeothermalGenerator", false)
 
 	// Realtime metrics
 	pullMetrics(db, "drone", "/getDrone", true)
