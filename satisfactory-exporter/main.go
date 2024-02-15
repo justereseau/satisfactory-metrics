@@ -50,6 +50,11 @@ func main() {
 			</html>`))
 	})
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`ok`))
+		w.WriteHeader(http.StatusOK)
+	})
+
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		level.Debug(logger).Log("msg", "Starting scrape")
