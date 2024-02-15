@@ -52,7 +52,6 @@ func main() {
 
 	http.HandleFunc("/-/healthy", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`ok`))
-		w.WriteHeader(http.StatusOK)
 	})
 
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +67,6 @@ func main() {
 			enabledCollectors = "production,power,factory_building,vehicle,drone_station,vehicle_station,train,train_station,player"
 		}
 		for _, collector := range strings.Split(enabledCollectors, ",") {
-			fmt.Println("Registering collector: ", collector)
 			switch collector {
 			case "production":
 				registry.MustRegister(exporter.NewProductionCollector(*frmApiAddress, logger))
