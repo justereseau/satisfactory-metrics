@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-kit/log/level"
@@ -64,21 +66,23 @@ func main() {
 			fmt.Println("Registering collector: ", collector)
 			switch collector {
 			case "production":
-		registry.MustRegister(exporter.NewProductionCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewProductionCollector(*frmApiAddress, logger))
 			case "power":
-		registry.MustRegister(exporter.NewPowerCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewPowerCollector(*frmApiAddress, logger))
 			case "factory_building":
-		registry.MustRegister(exporter.NewFactoryBuildingCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewFactoryBuildingCollector(*frmApiAddress, logger))
 			case "vehicle":
-		registry.MustRegister(exporter.NewVehicleCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewVehicleCollector(*frmApiAddress, logger))
 			case "drone_station":
-		registry.MustRegister(exporter.NewDroneStationCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewDroneStationCollector(*frmApiAddress, logger))
 			case "vehicle_station":
-		registry.MustRegister(exporter.NewVehicleStationCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewVehicleStationCollector(*frmApiAddress, logger))
 			case "train":
-		registry.MustRegister(exporter.NewTrainCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewTrainCollector(*frmApiAddress, logger))
 			case "train_station":
-		registry.MustRegister(exporter.NewTrainStationCollector(*frmApiAddress, logger))
+				registry.MustRegister(exporter.NewTrainStationCollector(*frmApiAddress, logger))
+			case "player":
+				registry.MustRegister(exporter.NewPlayerCollector(*frmApiAddress, logger))
 			default:
 				level.Warn(logger).Log("msg", "Unknown collector", "collector", collector)
 			}

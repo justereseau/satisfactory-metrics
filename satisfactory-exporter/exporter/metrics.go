@@ -5,6 +5,51 @@ import (
 )
 
 var (
+	PlayerPosition = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_current_position",
+		Help: "The current position of the player, per axis",
+	}, []string{
+		"player_name",
+		"player_id",
+		"axis_name",
+	})
+	PlayerRotation = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_current_rotation",
+		Help: "The current rotation of the player, in degrees",
+	}, []string{
+		"player_name",
+		"player_id",
+	})
+	PlayerHealth = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_current_health",
+		Help: "The current health of the player",
+	}, []string{
+		"player_name",
+		"player_id",
+	})
+	PlayerDead = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_is_dead",
+		Help: "Is the player dead",
+	}, []string{
+		"player_name",
+		"player_id",
+	})
+	PlayerPing = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_current_ping",
+		Help: "The current ping of the player",
+	}, []string{
+		"player_name",
+		"player_id",
+	})
+	PlayerTagColor = RegisterNewGaugeVec(prometheus.GaugeOpts{
+		Name: "player_tag_color",
+		Help: "The current tag color of the player",
+	}, []string{
+		"player_name",
+		"player_id",
+		"component",
+	})
+
 	ItemProductionCapacityPerMinute = RegisterNewGaugeVec(prometheus.GaugeOpts{
 		Name: "item_production_capacity_per_min",
 		Help: "The factory's capacity for the production of an item, per minute",
