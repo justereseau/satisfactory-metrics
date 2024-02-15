@@ -1,6 +1,6 @@
 module github.com/justereseau/satisfactory-metrics/satisfactory-exporter
 
-go 1.21.6
+go 1.22.0
 
 require (
 	github.com/go-kit/log v0.2.1
