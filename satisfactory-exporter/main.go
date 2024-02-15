@@ -53,14 +53,36 @@ func main() {
 		level.Debug(logger).Log("msg", "Starting scrape")
 
 		registry := prometheus.NewRegistry()
+
+		// Get enabled collectors from request
+		enabledCollectors := r.URL.Query().Get("collect")
+		fmt.Println("Enabled collectors: ", enabledCollectors)
+		if enabledCollectors == "all" || enabledCollectors == "" {
+			enabledCollectors = "production,power,factory_building,vehicle,drone_station,vehicle_station,train,train_station,player"
+		}
+		for _, collector := range strings.Split(enabledCollectors, ",") {
+			fmt.Println("Registering collector: ", collector)
+			switch collector {
+			case "production":
 		registry.MustRegister(exporter.NewProductionCollector(*frmApiAddress, logger))
+			case "power":
 		registry.MustRegister(exporter.NewPowerCollector(*frmApiAddress, logger))
+			case "factory_building":
 		registry.MustRegister(exporter.NewFactoryBuildingCollector(*frmApiAddress, logger))
+			case "vehicle":
 		registry.MustRegister(exporter.NewVehicleCollector(*frmApiAddress, logger))
+			case "drone_station":
 		registry.MustRegister(exporter.NewDroneStationCollector(*frmApiAddress, logger))
+			case "vehicle_station":
 		registry.MustRegister(exporter.NewVehicleStationCollector(*frmApiAddress, logger))
+			case "train":
 		registry.MustRegister(exporter.NewTrainCollector(*frmApiAddress, logger))
+			case "train_station":
 		registry.MustRegister(exporter.NewTrainStationCollector(*frmApiAddress, logger))
+			default:
+				level.Warn(logger).Log("msg", "Unknown collector", "collector", collector)
+			}
+		}
 
 		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 		h.ServeHTTP(w, r)
