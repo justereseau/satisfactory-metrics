@@ -50,7 +50,7 @@ func main() {
 			</html>`))
 	})
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/-/healthy", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`ok`))
 		w.WriteHeader(http.StatusOK)
 	})
