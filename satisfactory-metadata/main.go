@@ -74,7 +74,7 @@ func initDB(db *sql.DB) error {
 		frm_data jsonb
 	  );
 	  CREATE INDEX IF NOT EXISTS cache_metric_idx ON cache(metric);
-	  FLUSH cache;
+	  TRUNCATE TABLE cache;
 	  `)
 	if err != nil {
 		fmt.Println("Error while creating DB Table : ", err)
