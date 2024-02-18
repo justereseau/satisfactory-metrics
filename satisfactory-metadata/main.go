@@ -87,9 +87,8 @@ func initDB(db *sql.DB) error {
 // pull metrics from the Ficsit Remote Monitoring API
 func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 	resp, err := http.Get(*frmApiAddress + route)
-
 	if err != nil {
-		fmt.Println("Error while querying Ficsit Remote Monitoring API: ", err)
+		fmt.Println("Error while querying "+route, err)
 		return
 	}
 
@@ -101,7 +100,7 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 		if _, ok := err.(*json.UnmarshalTypeError); ok {
 			return
 		}
-		fmt.Println("Error while decoding Ficsit Remote Monitoring API response: ", err)
+		fmt.Println("Error while decoding "+route+" response: ", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -118,7 +117,7 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 		return
 	}
 
-	fmt.Println("Successfully cached metadatas for " + metric)
+	fmt.Println("Successfully cached metadatas from " + route + " for " + metric)
 }
 
 // cache metrics in the database
