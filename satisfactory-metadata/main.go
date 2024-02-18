@@ -74,6 +74,7 @@ func initDB(db *sql.DB) error {
 		frm_data jsonb
 	  );
 	  CREATE INDEX IF NOT EXISTS cache_metric_idx ON cache(metric);
+	  FLUSH cache;
 	  `)
 	if err != nil {
 		fmt.Println("Error while creating DB Table : ", err)
@@ -135,11 +136,6 @@ func cacheMetrics(db *sql.DB, metric string, data []string) (err error) {
 		}
 	}()
 
-	delete := `delete from cache where metric = $1;`
-	_, err = tx.Exec(delete, metric)
-	if err != nil {
-		return
-	}
 	for _, s := range data {
 		insert := `insert into cache (metric, frm_data) values($1, $2)`
 		_, err = tx.Exec(insert, metric, s)
