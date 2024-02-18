@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/benbjohnson/clock"
 	_ "github.com/lib/pq"
 )
 
@@ -20,9 +19,6 @@ var (
 	pgPassword = flag.String("db.pgpassword", "secretpassword", "postgres password")
 	pgUser     = flag.String("db.pguser", "postgres", "postgres username")
 	pgDb       = flag.String("db.pgdb", "postgres", "postgres db")
-
-	Clock = clock.New()
-	now   = Clock.Now()
 )
 
 func main() {
@@ -51,14 +47,8 @@ func main() {
 		panic("Failed to initialize database: " + err.Error())
 	}
 
-	err = flushMetricHistory(db)
-	if err != nil {
-		panic("Failed to flush metric history: " + err.Error())
-	}
-
-	// Low cadence metrics
-	pullMetrics(db, "factory", "/getFactory", true)
-	pullMetrics(db, "extractor", "/getExtractor", true)
+	pullMetrics(db, "factory", "/getFactory", false)
+	pullMetrics(db, "extractor", "/getExtractor", false)
 	pullMetrics(db, "dropPod", "/getDropPod", false)
 	pullMetrics(db, "storageInv", "/getStorageInv", false)
 	pullMetrics(db, "worldInv", "/getWorldInv", false)
@@ -68,14 +58,11 @@ func main() {
 	pullMetrics(db, "generators", "/getFuelGenerator", false)
 	pullMetrics(db, "generators", "/getNuclearGenerator", false)
 	pullMetrics(db, "generators", "/getGeothermalGenerator", false)
-
-	// Realtime metrics
-	pullMetrics(db, "drone", "/getDrone", true)
-	pullMetrics(db, "train", "/getTrains", true)
-	pullMetrics(db, "truck", "/getVehicles", true)
-	pullMetrics(db, "trainStation", "/getTrainStation", true)
-	pullMetrics(db, "truckStation", "/getTruckStation", true)
-
+	pullMetrics(db, "drone", "/getDrone", false)
+	pullMetrics(db, "train", "/getTrains", false)
+	pullMetrics(db, "truck", "/getVehicles", false)
+	pullMetrics(db, "trainStation", "/getTrainStation", false)
+	pullMetrics(db, "truckStation", "/getTruckStation", false)
 }
 
 // initialize the database
@@ -86,32 +73,13 @@ func initDB(db *sql.DB) error {
 		metric text NOT NULL,
 		frm_data jsonb
 	  );
-
-	  CREATE TABLE IF NOT EXISTS cache_with_history(
-		id serial primary key,
-		metric text NOT NULL,
-		frm_data jsonb,
-		time timestamp
-	  );
-
 	  CREATE INDEX IF NOT EXISTS cache_metric_idx ON cache(metric);
-	  CREATE INDEX IF NOT EXISTS cache_with_history_metric_idx ON cache_with_history(metric);
 	  `)
 	if err != nil {
-		fmt.Println("Error while creating DB Tables : ", err)
+		fmt.Println("Error while creating DB Table : ", err)
 		return err
 	}
 	fmt.Println("DB Tables created successfully")
-	return err
-}
-
-// flush the metric history cache
-func flushMetricHistory(db *sql.DB) error {
-	delete := `truncate cache_with_history;`
-	_, err := db.Exec(delete)
-	if err != nil {
-		fmt.Println("flush metrics history db error: ", err)
-	}
 	return err
 }
 
@@ -145,18 +113,11 @@ func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
 	err = cacheMetrics(db, metric, data)
 
 	if err != nil {
-		fmt.Println("error when caching metrics %s", err)
+		fmt.Println("error when caching metadatas %s", err)
 		return
 	}
 
-	if keepHistory {
-		err = cacheMetricsWithHistory(db, metric, data)
-		if err != nil {
-			fmt.Println("error when caching metrics history %s", err)
-			return
-		}
-	}
-	fmt.Println("Successfully cached metrics for " + metric)
+	fmt.Println("Successfully cached metadatas for " + metric)
 }
 
 // cache metrics in the database
@@ -186,41 +147,5 @@ func cacheMetrics(db *sql.DB, metric string, data []string) (err error) {
 			return
 		}
 	}
-	return
-}
-
-// cache metrics in the database with history
-func cacheMetricsWithHistory(db *sql.DB, metric string, data []string) (err error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return
-	}
-	defer func() {
-		switch err {
-		case nil:
-			err = tx.Commit()
-		default:
-			tx.Rollback()
-		}
-	}()
-	for _, s := range data {
-		insert := `insert into cache_with_history (metric, frm_data, time) values($1,$2,$3)`
-		_, err = tx.Exec(insert, metric, s, now)
-		if err != nil {
-			return
-		}
-	}
-
-	//720 = 1 hour, 5 second increments. retain that many rows for every data.
-	keep := 720 * len(data)
-
-	delete := `delete from cache_with_history where
-metric = $1 and
-id NOT IN (
-select id from "cache_with_history" where metric = $1
-order by id desc
-limit $2
-);`
-	_, err = tx.Exec(delete, metric, keep)
 	return
 }
