@@ -2,10 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -14,16 +17,63 @@ import (
 var (
 	frmApiAddress = flag.String("frm.listen-address", "http://localhost:8080", "Address of Ficsit Remote Monitoring webserver")
 
-	pgHost     = flag.String("db.pghost", "postgres", "postgres hostname")
-	pgPort     = flag.Int("db.pgport", 5432, "postgres port")
-	pgPassword = flag.String("db.pgpassword", "secretpassword", "postgres password")
-	pgUser     = flag.String("db.pguser", "postgres", "postgres username")
-	pgDb       = flag.String("db.pgdb", "postgres", "postgres db")
+	pgHost      = flag.String("db.pghost", "postgres", "postgres hostname")
+	pgPort      = flag.Int("db.pgport", 5432, "postgres port")
+	pgPassword  = flag.String("db.pgpassword", "secretpassword", "postgres password")
+	pgUser      = flag.String("db.pguser", "postgres", "postgres username")
+	pgDb        = flag.String("db.pgdb", "postgres", "postgres db")
+	metricsFile = flag.String("metrics.file", "", "Configuration file for metrics to pull from Ficsit Remote Monitoring API")
 )
+
+// New type for metrics to pull from Ficsit Remote Monitoring API
+type metric struct {
+	name  string
+	route string
+}
 
 func main() {
 	// Get parameters
 	flag.Parse()
+
+	metrics := []metric{}
+
+	// Read metrics from file if the file is provided
+	if *metricsFile != "" {
+		// Open the file
+		csvfile, err := os.Open(*metricsFile)
+		if err != nil {
+			log.Fatalln("Couldn't open the csv file", err)
+		}
+		r := csv.NewReader(csvfile)
+
+		// Read the file
+		records, err := r.ReadAll()
+		if err != nil {
+			log.Fatalln("Couldn't read the csv file", err)
+		}
+
+		// Loop through lines
+		for _, record := range records {
+			if len(record) != 2 {
+				log.Fatalln("Invalid line in csv file", record)
+			}
+			metrics = append(metrics, metric{name: record[0], route: record[1]})
+		}
+	} else {
+		// If no file is provided, use default metrics
+		metrics = append(metrics, metric{name: "factory", route: "getFactory"})
+		metrics = append(metrics, metric{name: "extractor", route: "getExtractor"})
+		metrics = append(metrics, metric{name: "dropPod", route: "getDropPod"})
+		metrics = append(metrics, metric{name: "storageInv", route: "getStorageInv"})
+		metrics = append(metrics, metric{name: "worldInv", route: "getWorldInv"})
+		metrics = append(metrics, metric{name: "droneStation", route: "getDroneStation"})
+		metrics = append(metrics, metric{name: "generators", route: "getGenerator"})
+		metrics = append(metrics, metric{name: "drone", route: "getDrone"})
+		metrics = append(metrics, metric{name: "train", route: "getTrains"})
+		metrics = append(metrics, metric{name: "truck", route: "getVehicles"})
+		metrics = append(metrics, metric{name: "trainStation", route: "getTrainStation"})
+		metrics = append(metrics, metric{name: "truckStation", route: "getTruckStation"})
+	}
 
 	// Generate connection string
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", *pgHost, *pgPort, *pgUser, *pgPassword, *pgDb)
@@ -47,22 +97,10 @@ func main() {
 		panic("Failed to initialize database: " + err.Error())
 	}
 
-	pullMetrics(db, "factory", "/getFactory", false)
-	pullMetrics(db, "extractor", "/getExtractor", false)
-	pullMetrics(db, "dropPod", "/getDropPod", false)
-	pullMetrics(db, "storageInv", "/getStorageInv", false)
-	pullMetrics(db, "worldInv", "/getWorldInv", false)
-	pullMetrics(db, "droneStation", "/getDroneStation", false)
-	pullMetrics(db, "generators", "/getCoalGenerator", false)
-	pullMetrics(db, "generators", "/getBiomassGenerator", false)
-	pullMetrics(db, "generators", "/getFuelGenerator", false)
-	pullMetrics(db, "generators", "/getNuclearGenerator", false)
-	pullMetrics(db, "generators", "/getGeothermalGenerator", false)
-	pullMetrics(db, "drone", "/getDrone", false)
-	pullMetrics(db, "train", "/getTrains", false)
-	pullMetrics(db, "truck", "/getVehicles", false)
-	pullMetrics(db, "trainStation", "/getTrainStation", false)
-	pullMetrics(db, "truckStation", "/getTruckStation", false)
+	// Pull metrics from Ficsit Remote Monitoring API
+	for _, m := range metrics {
+		pullMetrics(db, m.name, m.route)
+	}
 }
 
 // initialize the database
@@ -85,8 +123,8 @@ func initDB(db *sql.DB) error {
 }
 
 // pull metrics from the Ficsit Remote Monitoring API
-func pullMetrics(db *sql.DB, metric string, route string, keepHistory bool) {
-	resp, err := http.Get(*frmApiAddress + route)
+func pullMetrics(db *sql.DB, metric string, route string) {
+	resp, err := http.Get(*frmApiAddress + "/" + route)
 	if err != nil {
 		fmt.Println("Error while querying "+route, err)
 		return
