@@ -11,6 +11,7 @@ var (
 	}, []string{
 		"item_name",
 		"machine_name",
+		"geohash",
 		"x",
 		"y",
 		"z",
@@ -22,6 +23,7 @@ var (
 	}, []string{
 		"item_name",
 		"machine_name",
+		"geohash",
 		"x",
 		"y",
 		"z",

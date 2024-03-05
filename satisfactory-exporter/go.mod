@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/go-kit/log v0.2.1
+	github.com/pierrre/geohash v1.1.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.46.0
 )

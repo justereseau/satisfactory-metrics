@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/pierrre/geohash"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -38,6 +39,7 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 			x := building.Location.X*0.000000117118912 + 0.03804908
 			y := -building.Location.Y*0.000000117118912 - 0.0439383731
 			z := building.Location.Z
+			gh := geohash.EncodeAuto(building.Location.X*0.000000117118912+0.03804908, -building.Location.Y*0.000000117118912-0.0439383731)
 
 			ch <- prometheus.MustNewConstMetric(
 				MachineItemsProducedPerMin,
@@ -45,6 +47,7 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 				prod.CurrentProd,
 				prod.Name,
 				building.Building,
+				gh,
 				strconv.FormatFloat(x, 'f', -1, 64),
 				strconv.FormatFloat(y, 'f', -1, 64),
 				strconv.FormatFloat(z, 'f', -1, 64),
@@ -56,6 +59,7 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 				prod.ProdPercent,
 				prod.Name,
 				building.Building,
+				gh,
 				strconv.FormatFloat(x, 'f', -1, 64),
 				strconv.FormatFloat(y, 'f', -1, 64),
 				strconv.FormatFloat(z, 'f', -1, 64),
