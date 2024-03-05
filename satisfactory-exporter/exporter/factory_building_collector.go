@@ -39,7 +39,7 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 			x := building.Location.X*0.000000117118912 + 0.03804908
 			y := -building.Location.Y*0.000000117118912 - 0.0439383731
 			z := building.Location.Z
-			gh := geohash.EncodeAuto(building.Location.X*0.000000117118912+0.03804908, -building.Location.Y*0.000000117118912-0.0439383731)
+			gh := geohash.EncodeAuto(y, x)
 
 			ch <- prometheus.MustNewConstMetric(
 				MachineItemsProducedPerMin,
