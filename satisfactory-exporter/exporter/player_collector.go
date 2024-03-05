@@ -49,7 +49,7 @@ func (c *PlayerCollector) Collect(ch chan<- prometheus.Metric) {
 
 	for _, d := range details {
 		ch <- prometheus.MustNewConstMetric(PlayerPosition, prometheus.GaugeValue, d.Location.X*0.000000117118912+0.03804908, d.PlayerName, fmt.Sprintf("%f", d.ID), "X")
-		ch <- prometheus.MustNewConstMetric(PlayerPosition, prometheus.GaugeValue, d.Location.Y*0.000000117118912-0.0439383731, d.PlayerName, fmt.Sprintf("%f", d.ID), "Y")
+		ch <- prometheus.MustNewConstMetric(PlayerPosition, prometheus.GaugeValue, -d.Location.Y*0.000000117118912-0.0439383731, d.PlayerName, fmt.Sprintf("%f", d.ID), "Y")
 		ch <- prometheus.MustNewConstMetric(PlayerPosition, prometheus.GaugeValue, d.Location.Z, d.PlayerName, fmt.Sprintf("%f", d.ID), "Z")
 		ch <- prometheus.MustNewConstMetric(PlayerRotation, prometheus.GaugeValue, float64(d.Location.Rotation), d.PlayerName, fmt.Sprintf("%f", d.ID))
 		ch <- prometheus.MustNewConstMetric(PlayerHealth, prometheus.GaugeValue, d.PlayerHP, d.PlayerName, fmt.Sprintf("%f", d.ID))

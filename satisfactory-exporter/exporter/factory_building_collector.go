@@ -36,7 +36,7 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, building := range details {
 		for _, prod := range building.Production {
 			x := building.Location.X*0.000000117118912 + 0.03804908
-			y := building.Location.Y*0.000000117118912 - 0.0439383731
+			y := -building.Location.Y*0.000000117118912 - 0.0439383731
 			z := building.Location.Z
 
 			ch <- prometheus.MustNewConstMetric(
