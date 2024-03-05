@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -62,7 +61,8 @@ func main() {
 
 		// Get enabled collectors from request
 		enabledCollectors := r.URL.Query().Get("collect")
-		fmt.Println("Enabled collectors: ", enabledCollectors)
+		level.Debug(logger).Log("msg", "Enabled collectors: ", enabledCollectors)
+
 		if enabledCollectors == "all" || enabledCollectors == "" {
 			enabledCollectors = "production,power,factory_building,vehicle,drone_station,vehicle_station,train,train_station,player"
 		}
