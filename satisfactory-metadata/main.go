@@ -151,7 +151,7 @@ func pullMetrics(db *sql.DB, metric string, route string) {
 	err = cacheMetrics(db, metric, data)
 
 	if err != nil {
-		fmt.Println("error when caching metadatas %s", err)
+		fmt.Printf("error when caching metadatas %s\n", err)
 		return
 	}
 
