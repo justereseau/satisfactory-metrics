@@ -1,0 +1,217 @@
+# This create a namespace for monitoring
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: satisfactory-monitoring
+  labels:
+    name: satisfactory-monitoring
+---
+# This will configure the Nginx instance to forward requests to an external service
+# The external service will only serve pngs based on the request
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: map-tile-proxy-config
+  namespace: satisfactory-monitoring
+data:
+  nginx.conf: |
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log notice;
+    pid        /tmp/nginx.pid;
+
+    events {
+        worker_connections  1024;
+    }
+
+    http {
+      include       /etc/nginx/mime.types;
+      default_type  application/octet-stream;
+
+      proxy_ssl_server_name on;
+
+      log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+
+      access_log  /var/log/nginx/access.log  main;
+
+      # For readonly filesystem
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp_path;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+
+      # Configure the cache path
+      proxy_cache_path      /proxy_cache levels=1:2 keys_zone=map_cache:30m max_size=10g inactive=10d use_temp_path=off;
+
+      sendfile        on;
+      #tcp_nopush     on;
+      keepalive_timeout  65;
+
+      server {
+        listen 8080;
+        server_name maps.satisfactory.djls.space;
+
+        location ~ ^/maps/(\d+)/(\d+)/(\d+)\.png$ {
+          proxy_pass https://static.satisfactory-calculator.com;
+          proxy_set_header Host static.satisfactory-calculator.com;
+
+          rewrite ^/maps/(\d+)/(\d+)/(\d+)\.png$ /imgMap/realisticLayer/Stable/$1/$2/$3.png break;
+
+          # Remove headers that might reveal the proxy
+          proxy_hide_header Proxy-Connection;
+          proxy_hide_header X-Powered-By;
+
+          # Pass on the original user agent
+          proxy_set_header User-Agent $http_user_agent;
+
+          # Drop the Referer header
+          proxy_set_header Referer "";
+    
+          # CORS settings
+          add_header 'Access-Control-Allow-Origin' '*' always;
+          add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+          add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+          add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+          if ($request_method = 'OPTIONS') {
+              add_header 'Access-Control-Allow-Origin' '*';
+              add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+              add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+              add_header 'Access-Control-Max-Age' 1728000;
+              add_header 'Content-Type' 'text/plain; charset=utf-8';
+              add_header 'Content-Length' 0;
+              return 204;
+          }
+
+          # Adjust timeouts as needed
+          proxy_connect_timeout 60s;
+          proxy_send_timeout 60s;
+          proxy_read_timeout 60s;
+
+          # Optional: Enable caching
+          proxy_cache map_cache;
+          proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+          proxy_cache_valid 200 30d;
+          proxy_cache_valid 404 1d;
+          proxy_cache_bypass $http_cache_control;
+          add_header X-Cache-Status $upstream_cache_status;
+        }
+
+        location /-/healthy {
+          return 200 'OK';
+          add_header Content-Type text/plain;
+        }
+      }
+    }
+---
+# This will deploy an Nginx instance to forward requests to an external service
+# The external service will only serve pngs based on the request
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: map-tile-proxy
+  namespace: satisfactory-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: map-tile-proxy
+  template:
+    metadata:
+      labels:
+        app: map-tile-proxy
+    spec:
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: map-tile-proxy-config
+      - name: cache-volume
+        emptyDir: {}
+      containers:
+      - name: map-tile-proxy
+        image: nginx:latest
+        command: [ "/bin/bash", "-c", "nginx -g 'daemon off;'" ]
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: cache-volume
+          mountPath: /proxy_cache
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        startupProbe:
+          httpGet:
+            path: /-/healthy
+            port: http
+          failureThreshold: 1
+          periodSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /-/healthy
+            port: http
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: http
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        securityContext:
+          seccompProfile:
+            type: RuntimeDefault
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          runAsUser: 101
+          runAsGroup: 101
+          capabilities:
+            drop:
+              - ALL
+---
+# This will create a service to expose the Nginx instance
+apiVersion: v1
+kind: Service
+metadata:
+  name: map-tile-proxy
+  namespace: satisfactory-monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: map-tile-proxy
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: http
+---
+# This will create an ingress to expose the Nginx instance to the internet
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: map-tile-proxy
+  namespace: satisfactory-monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - secretName: tls-secret-maps-proxy
+    hosts:
+      - maps.satisfactory.djls.space
+  rules:
+  - host: maps.satisfactory.djls.space
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: map-tile-proxy
+            port:
+              name: http
