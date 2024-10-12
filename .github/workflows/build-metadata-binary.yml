@@ -1,13 +1,19 @@
 name: Metadata Binary Build
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - satisfactory-metadata/**
-      - .github/workflows/build-metadata-binary.yml
-  pull_request:
-    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 'Build the exporter binary'
+        required: true
+        default: 'true'
+  # push:
+  #   branches: ["main"]
+  #   paths:
+  #     - satisfactory-metadata/**
+  #     - .github/workflows/build-metadata-binary.yml
+  # pull_request:
+  #   branches: ["main"]
 
 jobs:
   build:
