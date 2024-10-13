@@ -36,8 +36,8 @@ func (c *FactoryBuildingCollector) Collect(ch chan<- prometheus.Metric) {
 	maxPowerInfo := map[float64]float64{}
 	for _, building := range details {
 		for _, prod := range building.Production {
-			x := building.Location.X*0.0002400052604 - 79.56302209
-			y := -building.Location.Y*0.0001673061871 + 43.71230201
+			x := building.Location.X*0.000239930467 - 79.70308527
+			y := -building.Location.Y*0.0001413589137 + 36.97720935
 			z := building.Location.Z
 			gh := geohash.EncodeAuto(y, x)
 
